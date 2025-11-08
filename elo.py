@@ -25,6 +25,8 @@ class Team():
 		self.seven_days_ago = starting_elo
 		self.season_game_count = 0
 		self.conference = CONFERENCE_DICT.get(name, 'Other')
+		self.top25_wins = 0
+		self.top25_losses = 0
 
 	def update_elo(self, change):
 		self.elo = max(0, self.elo + change)
@@ -32,6 +34,21 @@ class Team():
 
 	def reset_game_count(self):
 		self.season_game_count = 0
+
+	def update_top25_record(self, won):
+		if won:
+			self.top25_wins += 1
+		else:
+			self.top25_losses += 1
+
+	def reset_top25_record(self):
+		self.top25_wins = 0
+		self.top25_losses = 0
+
+	def get_top25_record(self):
+		if self.top25_wins == 0 and self.top25_losses == 0:
+			return '-'
+		return f'{self.top25_wins}-{self.top25_losses}'
 
 class ELO_Sim():
 	'''
@@ -73,6 +90,7 @@ class ELO_Sim():
 			cavg = score_dict[self.teams[team].conference] / count_dict[self.teams[team].conference]
 			self.teams[team].elo = (self.get_elo(team) * new_season_carry) + ((1 - new_season_carry) * cavg)
 			self.teams[team].reset_game_count()
+			self.teams[team].reset_top25_record()
 
 	def add_team(self, name):
 		self.teams[name] = Team(name, self.date, ELO_BASE if self.season_count == 0 else NEW_ELO)
@@ -82,7 +100,7 @@ class ELO_Sim():
 		self.teams[loser].update_elo(-delta)
 
 	def get_top(self, x):
-		return sorted([(self.teams[team].name, round(self.get_elo(team), 0), "{0:+.0f}".format(self.get_elo(team) - self.teams[team].snapshots[-1][-1])) for team in self.teams], key = lambda x: x[1], reverse = True)[:x]
+		return sorted([(self.teams[team].name, round(self.get_elo(team), 0), "{0:+.0f}".format(self.get_elo(team) - self.teams[team].snapshots[-1][-1]), self.teams[team].get_top25_record()) for team in self.teams], key = lambda x: x[1], reverse = True)[:x]
 
 	def get_rankings_dict(self):
 		#returns a dictionary mapping each team to their position in the current ELO rankings
@@ -122,18 +140,29 @@ def step_elo(this_sim, row, k_factor, home_elo):
 	if home not in this_sim.teams: this_sim.add_team(home)
 	if away not in this_sim.teams: this_sim.add_team(away)
 
+	# Get current rankings before updating ELO to check if opponent is Top 25
+	rankings = this_sim.get_rankings_dict()
+	home_rank = rankings.get(home, 999)
+	away_rank = rankings.get(away, 999)
+
 	home_boost = home_elo if row[0] == '0' else 0
 	Welo_0, Lelo_0 = this_sim.get_elo(winner), this_sim.get_elo(loser)
 	if winner == home: Welo_0 += home_boost
 	else: Lelo_0 += home_boost
-	
+
 	elo_margin = Welo_0 - Lelo_0 #winner minus loser elo
 	w_winp = winp(elo_margin)
-	
+
 	MoV = winnerScore - loserScore
 	MoV_multiplier = calc_MoV_multiplier(elo_margin, MoV)
 	elo_delta = round(k_factor * MoV_multiplier * (1 - w_winp), 2)
 	this_sim.update_elos(winner, loser, elo_delta)
+
+	# Update Top 25 records
+	if home_rank <= 25:
+		this_sim.teams[away].update_top25_record(away == winner)
+	if away_rank <= 25:
+		this_sim.teams[home].update_top25_record(home == winner)
 
 	return elo_margin, MoV
 
@@ -183,10 +212,10 @@ def main(topteams = False, stop_short = '99999999', period = 7):
 	this_sim = sim(data, K_FACTOR, SEASON_CARRY, HOME_ADVANTAGE, stop_short, period)
 
 	if topteams != False:
-		output = pd.DataFrame(this_sim.get_top(int(topteams)), columns = ['Team', 'Elo Rating', '%i Day Change' % period])
+		output = pd.DataFrame(this_sim.get_top(int(topteams)), columns = ['Team', 'Elo Rating', '%i Day Change' % period, 'Record vs Top 25'])
 		output['Point Spread vs. Next Rank'] = ["{0:+.1f}".format(((output['Elo Rating'][i] - output['Elo Rating'][i+1])/ELO_TO_POINTS_FACTOR)) for i in range(topteams - 1)] + ['']
 		output['Rank'] = [i for i in range (1, topteams+1)]
-		utils.table_output(output, 'Ratings through ' + this_sim.date + ' - Top ' + str(topteams), ['Rank', 'Team', 'Elo Rating', 'Point Spread vs. Next Rank', '%i Day Change' % period])
+		utils.table_output(output, 'Ratings through ' + this_sim.date + ' - Top ' + str(topteams), ['Rank', 'Team', 'Elo Rating', 'Point Spread vs. Next Rank', '%i Day Change' % period, 'Record vs Top 25'])
 
 	return this_sim
 
