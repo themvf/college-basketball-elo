@@ -30,7 +30,8 @@ DB_COLUMNS = [
     'actual_away_score',      # Filled in after game
     'actual_spread',          # Actual away_score - home_score
     'home_won',               # 1 if home won, 0 if away won
-    'prediction_correct',     # 1 if predicted winner correctly
+    'prediction_correct',     # 1 if predicted winner correctly (win/loss only)
+    'ats_correct',            # 1 if covered the spread (betting accuracy)
     'spread_error',           # abs(predicted_spread - actual_spread)
     'game_played',            # 1 if game happened, 0 if cancelled/postponed
     'result_updated_date'     # Date when results were added
@@ -118,6 +119,7 @@ def store_predictions(prediction_df, prediction_date, game_date, elo_state):
             'actual_spread': None,
             'home_won': None,
             'prediction_correct': None,
+            'ats_correct': None,
             'spread_error': None,
             'game_played': 0,  # Default to not played yet
             'result_updated_date': None
@@ -237,6 +239,29 @@ def update_results(results_df, update_date=None):
                     actual_spread = int(away_score) - int(home_score)
                     db.at[idx, 'spread_error'] = abs(predicted_spread - actual_spread)
 
+                # Calculate ATS (Against the Spread) correctness
+                # This determines if the spread bet would have won
+                predicted_home_spread = db.at[idx, 'predicted_home_spread']
+                if pd.notna(predicted_home_spread):
+                    actual_home_margin = int(home_score) - int(away_score)
+
+                    if predicted_home_spread < 0:
+                        # Home team is favored
+                        # To cover, home must win by MORE than the spread
+                        # Example: -9.9 spread means home must win by 10+ points
+                        spread_to_cover = abs(predicted_home_spread)
+                        covered = actual_home_margin > spread_to_cover
+                    elif predicted_home_spread > 0:
+                        # Away team is favored (home is underdog)
+                        # To cover, home can lose by LESS than the spread
+                        # Example: +9.9 spread means home can lose by up to 9 points
+                        covered = actual_home_margin > -predicted_home_spread
+                    else:
+                        # Pick'em (spread is 0)
+                        covered = actual_home_margin > 0
+
+                    db.at[idx, 'ats_correct'] = 1 if covered else 0
+
                 db.at[idx, 'game_played'] = 1
                 db.at[idx, 'result_updated_date'] = update_date
 
@@ -291,6 +316,15 @@ def calculate_metrics(days_back=None, min_date=None):
     total_games = len(played)
     correct_predictions = played['prediction_correct'].sum()
     accuracy = correct_predictions / total_games if total_games > 0 else 0
+
+    # ATS (Against the Spread) accuracy - the real betting metric
+    ats_predictions = played[played['ats_correct'].notna()]
+    if len(ats_predictions) > 0:
+        ats_correct = ats_predictions['ats_correct'].sum()
+        ats_accuracy = ats_correct / len(ats_predictions)
+    else:
+        ats_correct = 0
+        ats_accuracy = None
 
     # Brier score (measures probability calibration)
     # Brier = mean((predicted_prob - actual_outcome)^2)
@@ -349,6 +383,9 @@ def calculate_metrics(days_back=None, min_date=None):
         'total_games_played': int(total_games),
         'correct_predictions': int(correct_predictions),
         'accuracy': round(accuracy, 4),
+        'ats_correct': int(ats_correct) if ats_accuracy is not None else 0,
+        'ats_accuracy': round(ats_accuracy, 4) if ats_accuracy is not None else None,
+        'ats_total': int(len(ats_predictions)) if ats_accuracy is not None else 0,
         'brier_score': round(brier_score, 4),
         'log_loss': round(log_loss, 4),
         'mean_spread_error': round(mean_spread_error, 2),
@@ -388,10 +425,16 @@ def generate_report(output_file=None):
 
     report += "## Overall Performance\n\n"
     report += f"- **Total Predictions**: {metrics['total_predictions']}\n"
-    report += f"- **Correct Predictions**: {metrics['correct_predictions']}\n"
-    report += f"- **Accuracy**: {metrics['accuracy']:.2%}\n"
+    report += f"- **Correct Predictions (Win/Loss)**: {metrics['correct_predictions']}\n"
+    report += f"- **Win/Loss Accuracy**: {metrics['accuracy']:.2%}\n"
     report += f"- **Brier Score**: {metrics['brier_score']:.4f} (lower is better)\n"
     report += f"- **Log Loss**: {metrics['log_loss']:.4f} (lower is better)\n\n"
+
+    if metrics['ats_accuracy'] is not None:
+        report += "## Against the Spread (ATS) - Betting Accuracy\n\n"
+        report += f"- **ATS Correct**: {metrics['ats_correct']} / {metrics['ats_total']}\n"
+        report += f"- **ATS Accuracy**: {metrics['ats_accuracy']:.2%}\n"
+        report += f"- This measures whether spread bets would have won (the real betting value)\n\n"
 
     report += "## Spread Performance\n\n"
     report += f"- **Mean Spread Error**: {metrics['mean_spread_error']:.2f} points\n"

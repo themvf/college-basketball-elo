@@ -103,6 +103,15 @@ if len(filtered_games) > 0:
     correct = filtered_games['prediction_correct'].sum()
     accuracy = correct / total_games if total_games > 0 else 0
 
+    # ATS (Against the Spread) metrics
+    ats_games = filtered_games[filtered_games['ats_correct'].notna()]
+    if len(ats_games) > 0:
+        ats_correct = ats_games['ats_correct'].sum()
+        ats_accuracy = ats_correct / len(ats_games)
+    else:
+        ats_correct = 0
+        ats_accuracy = None
+
     # Brier score
     brier = ((filtered_games['predicted_home_win_prob'] - filtered_games['home_won']) ** 2).mean()
 
@@ -120,76 +129,126 @@ if len(filtered_games) > 0:
 
     # Overview metrics
     st.header("📊 Overview Metrics")
+
+    # Add ATS explanation
+    with st.expander("ℹ️ Understanding ATS (Against the Spread)"):
+        st.markdown("""
+        **Against the Spread (ATS)** measures betting accuracy, not just predicting winners.
+
+        - **ATS Accuracy** shows how often the spread prediction would win a bet
+        - A spread favorite must **win by MORE than the spread** to "cover" (betting win)
+        - Example: If Team A is favored by -9.9 points, they must win by 10+ to cover
+        - Winning by exactly 9 points means the spread bet **loses**
+        - Winning by exactly the spread (e.g., 10.0) is a "push" (tie)
+
+        **Why ATS matters more than Win/Loss:**
+        - Win/loss just predicts the winner (easier with heavy favorites)
+        - ATS shows if the prediction has actual betting value
+        - Professional bettors care about ATS, not just picking winners
+        """)
+
     col1, col2, col3, col4, col5 = st.columns(5)
 
     with col1:
-        st.metric(
-            "Win/Loss Accuracy",
-            f"{accuracy:.1%}",
-            delta=f"{correct}/{total_games}"
-        )
+        if ats_accuracy is not None:
+            st.metric(
+                "ATS Accuracy (Betting)",
+                f"{ats_accuracy:.1%}",
+                delta=f"{int(ats_correct)}/{len(ats_games)} correct",
+                help="Against the Spread accuracy - measures betting value"
+            )
+        else:
+            st.metric("ATS Accuracy", "N/A", delta="No data")
 
     with col2:
         st.metric(
-            "Brier Score",
-            f"{brier:.4f}",
-            delta="Lower is better",
-            delta_color="inverse"
+            "Win/Loss Accuracy",
+            f"{accuracy:.1%}",
+            delta=f"{correct}/{total_games}",
+            help="Simple win/loss prediction accuracy"
         )
 
     with col3:
         st.metric(
-            "Mean Spread Error",
-            f"{mean_spread_error:.2f} pts",
-            delta=f"Median: {median_spread_error:.2f}"
+            "Brier Score",
+            f"{brier:.4f}",
+            delta="Lower is better",
+            delta_color="inverse",
+            help="Probability calibration metric"
         )
 
     with col4:
-        if beat_vegas is not None:
-            st.metric(
-                "Beat Vegas",
-                f"{beat_vegas:.1%}",
-                delta=f"{len(vegas_games)} games"
-            )
-        else:
-            st.metric("Beat Vegas", "N/A", delta="No data")
+        st.metric(
+            "Mean Spread Error",
+            f"{mean_spread_error:.2f} pts",
+            delta=f"Median: {median_spread_error:.2f}",
+            help="Average point difference from actual spread"
+        )
 
     with col5:
+        # Recent 7 days ATS accuracy
         recent_7_days = filtered_games[filtered_games['game_date'] >= (max_date - timedelta(days=7))]
         if len(recent_7_days) > 0:
-            recent_acc = recent_7_days['prediction_correct'].sum() / len(recent_7_days)
-            st.metric(
-                "Last 7 Days",
-                f"{recent_acc:.1%}",
-                delta=f"{len(recent_7_days)} games"
-            )
+            recent_ats = recent_7_days[recent_7_days['ats_correct'].notna()]
+            if len(recent_ats) > 0:
+                recent_ats_acc = recent_ats['ats_correct'].sum() / len(recent_ats)
+                st.metric(
+                    "Last 7 Days (ATS)",
+                    f"{recent_ats_acc:.1%}",
+                    delta=f"{len(recent_ats)} games",
+                    help="Recent ATS accuracy"
+                )
+            else:
+                st.metric("Last 7 Days", "N/A", delta="No data")
         else:
             st.metric("Last 7 Days", "N/A", delta="No data")
 
     # Accuracy over time
     st.header("📈 Accuracy Trends Over Time")
 
+    window = st.slider("Rolling window (games)", 5, 50, 20)
+
+    # First row: ATS and Win/Loss accuracy
     col1, col2 = st.columns(2)
 
-    with col1:
-        # Rolling accuracy
-        filtered_games_sorted = filtered_games.sort_values('game_date')
-        window = st.slider("Rolling window (games)", 5, 50, 20)
+    filtered_games_sorted = filtered_games.sort_values('game_date')
 
+    with col1:
+        # Rolling ATS accuracy
+        filtered_games_sorted['rolling_ats'] = filtered_games_sorted['ats_correct'].rolling(window=window, min_periods=1).mean()
+
+        fig_ats = px.line(
+            filtered_games_sorted,
+            x='game_date',
+            y='rolling_ats',
+            title=f'Rolling ATS Accuracy ({window}-game window)',
+            labels={'rolling_ats': 'ATS Accuracy', 'game_date': 'Date'}
+        )
+        fig_ats.add_hline(y=0.5, line_dash="dash", line_color="gray", annotation_text="50% baseline (random)")
+        fig_ats.add_hline(y=0.525, line_dash="dot", line_color="green", annotation_text="52.5% (break-even)")
+        fig_ats.update_yaxes(tickformat='.0%', range=[0.3, 1.0])
+        st.plotly_chart(fig_ats, use_container_width=True)
+        st.caption("52.5% ATS accuracy needed to break even after typical betting fees")
+
+    with col2:
+        # Rolling win/loss accuracy
         filtered_games_sorted['rolling_accuracy'] = filtered_games_sorted['prediction_correct'].rolling(window=window, min_periods=1).mean()
 
         fig_acc = px.line(
             filtered_games_sorted,
             x='game_date',
             y='rolling_accuracy',
-            title=f'Rolling Accuracy ({window}-game window)',
+            title=f'Rolling Win/Loss Accuracy ({window}-game window)',
             labels={'rolling_accuracy': 'Accuracy', 'game_date': 'Date'}
         )
         fig_acc.add_hline(y=0.5, line_dash="dash", line_color="gray", annotation_text="50% baseline")
         fig_acc.update_yaxes(tickformat='.0%', range=[0.3, 1.0])
         st.plotly_chart(fig_acc, use_container_width=True)
 
-    with col2:
+    # Second row: Brier score
+    col1, col2 = st.columns(2)
+
+    with col1:
         # Brier score over time
         filtered_games_sorted['brier'] = (filtered_games_sorted['predicted_home_win_prob'] - filtered_games_sorted['home_won']) ** 2
         filtered_games_sorted['rolling_brier'] = filtered_games_sorted['brier'].rolling(window=window, min_periods=1).mean()
@@ -204,6 +263,10 @@ if len(filtered_games) > 0:
         fig_brier.add_hline(y=0.25, line_dash="dash", line_color="gray", annotation_text="Random guessing")
         fig_brier.update_yaxes(range=[0, 0.3])
         st.plotly_chart(fig_brier, use_container_width=True)
+
+    with col2:
+        # Empty for balance (could add another chart later)
+        pass
 
     # Spread performance
     st.header("📏 Spread Performance")
@@ -415,21 +478,31 @@ if len(filtered_games) > 0:
     recent_games['confidence'] = recent_games['predicted_home_win_prob'].apply(
         lambda x: max(x, 1-x)
     )
-    recent_games['correct'] = recent_games['prediction_correct'].map({1: '✅', 0: '❌'})
+    recent_games['win_loss_correct'] = recent_games['prediction_correct'].map({1: '✅', 0: '❌'})
+    recent_games['ats_indicator'] = recent_games['ats_correct'].apply(
+        lambda x: '✅' if x == 1 else ('❌' if x == 0 else 'N/A')
+    )
 
     display_df = recent_games[[
         'game_date', 'result', 'predicted_winner', 'confidence',
-        'predicted_home_spread', 'spread_error', 'correct'
+        'predicted_home_spread', 'spread_error', 'win_loss_correct', 'ats_indicator'
     ]].copy()
 
     display_df.columns = ['Date', 'Result', 'Predicted Winner', 'Confidence',
-                          'Predicted Spread', 'Spread Error', 'Correct']
+                          'Predicted Spread', 'Spread Error', 'Win/Loss', 'ATS']
     display_df['Confidence'] = display_df['Confidence'].map(lambda x: f"{x:.1%}")
     display_df['Predicted Spread'] = display_df['Predicted Spread'].map(lambda x: f"{x:+.1f}")
     display_df['Spread Error'] = display_df['Spread Error'].map(lambda x: f"{x:.1f}")
     display_df['Date'] = display_df['Date'].dt.strftime('%Y-%m-%d')
 
     st.dataframe(display_df, use_container_width=True, hide_index=True)
+
+    st.info("""
+    **Column Guide:**
+    - **Win/Loss**: ✅ if predicted the correct winner
+    - **ATS**: ✅ if the spread prediction would have won a bet (covered the spread)
+    - A game can be ✅ for Win/Loss but ❌ for ATS (predicted winner but margin was wrong)
+    """)
 
     # Download data
     st.header("💾 Export Data")
@@ -449,7 +522,9 @@ if len(filtered_games) > 0:
         # Calculate summary metrics
         summary = {
             'Total Games': total_games,
-            'Accuracy': f"{accuracy:.2%}",
+            'ATS Accuracy': f"{ats_accuracy:.2%}" if ats_accuracy is not None else "N/A",
+            'ATS Correct': f"{int(ats_correct)}/{len(ats_games)}" if ats_accuracy is not None else "N/A",
+            'Win/Loss Accuracy': f"{accuracy:.2%}",
             'Brier Score': f"{brier:.4f}",
             'Mean Spread Error': f"{mean_spread_error:.2f}",
             'Median Spread Error': f"{median_spread_error:.2f}",
