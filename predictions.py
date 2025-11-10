@@ -6,6 +6,7 @@ import argparse
 import scraper
 import datetime
 import spread_enricher
+import prediction_tracker
 
 DATA_FOLDER = utils.DATA_FOLDER
 ALL_ROUNDS = ['first', 'second', 'sixteen', 'eight', 'four', 'final', 'champion']
@@ -155,8 +156,16 @@ def predict_next_day(elo_state, forecast_date, auto):
 	utils.table_output(output, forecast_date.strftime('%Y%m%d') + ' Game Predictions Based on Ratings through ' + elo_state.date + spreads_string)
 	
 	#save the predictions output in markdown where github pages can find it
-	new_top_50 = pd.DataFrame(elo_state.get_top(50), columns = ['Team', 'Elo Rating', '7 Day Change']) 
+	new_top_50 = pd.DataFrame(elo_state.get_top(50), columns = ['Team', 'Elo Rating', '7 Day Change'])
 	utils.save_markdown_df(output, new_top_50, forecast_date.strftime('%Y-%m-%d'))
+
+	# Store predictions in database for tracking
+	prediction_date = datetime.date.today().strftime('%Y%m%d')
+	game_date = forecast_date.strftime('%Y%m%d')
+	try:
+		prediction_tracker.store_predictions(output, prediction_date, game_date, elo_state)
+	except Exception as e:
+		print(f"Warning: Could not store predictions in database: {e}")
 
 def main(auto = False, forecast_date = False, matchup = False, neutral = False, sim_mode = False, stop_short = '99999999', bracket = False, pick_mode = 0, bracket_round_start = 0):
 	'''

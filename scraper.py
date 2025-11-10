@@ -2,6 +2,7 @@ import datetime
 from bs4 import BeautifulSoup
 import utils
 import requests
+import prediction_tracker
 
 '''
 The general strategy for this scraper is to scrape all games this season and their neutral status from teamrankings.com (TR).
@@ -160,6 +161,26 @@ def scrape_by_day(file_start, scrape_start, scrape_end, all_data):
 	print(len(new_data), "games recorded")
 	all_data.extend(new_data)
 	utils.save_data(DATA_FOLDER + file_start + "-" + (i - datetime.timedelta(days = 1)).strftime('%Y%m%d') + ".csv", all_data)
+
+	# Update predictions database with new results
+	if len(new_data) > 0:
+		try:
+			# Convert new_data to format expected by update_results
+			results_list = []
+			for game in new_data:
+				results_list.append({
+					'neutral': game[0],
+					'away_team': game[1],
+					'away_score': game[2],
+					'home_team': game[3],
+					'home_score': game[4],
+					'date': game[5]
+				})
+			update_date = datetime.datetime.now().strftime('%Y%m%d')
+			prediction_tracker.update_results(results_list, update_date)
+		except Exception as e:
+			print(f"Warning: Could not update predictions database: {e}")
+
 	return all_data
 
 def main(file_start, scrape_start, scrape_end, data_filepath = False):

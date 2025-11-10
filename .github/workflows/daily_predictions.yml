@@ -23,7 +23,10 @@ jobs:
           
       - name: execute py script # run predictions.py
         run: python predictions.py -A
-          
+
+      - name: generate performance report
+        run: python generate_performance_report.py
+
       - name: commit files
         run: |
           git config --local user.email "action@github.com"

@@ -1,0 +1,82 @@
+name: update-performance-tracking
+on:
+  workflow_dispatch:  # Manual trigger
+  schedule: # weekly on Mondays at 10 AM EST
+    - cron: '0 15 * * 1'
+
+jobs:
+  update-tracking:
+    name: Update Performance Tracking
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout repo content
+        uses: actions/checkout@v2
+
+      - name: setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8.15'
+
+      - name: install python packages
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: initialize predictions database
+        run: python -c "import prediction_tracker; prediction_tracker.initialize_database()"
+
+      - name: backfill predictions from existing files
+        run: python -c "import prediction_tracker; prediction_tracker.backfill_predictions()"
+
+      - name: update results from game data
+        run: |
+          python -c "
+          import prediction_tracker
+          import utils
+          import pandas as pd
+          import glob
+          import os
+
+          # Find the latest game data file
+          data_files = glob.glob(os.path.join(utils.DATA_FOLDER, '*.csv'))
+          data_files = [f for f in data_files if 'predictions_database' not in f and 'performance_metrics' not in f]
+
+          if data_files:
+              latest_file = max(data_files, key=os.path.getmtime)
+              print(f'Reading game data from {latest_file}')
+
+              # Read all games
+              all_games = utils.read_csv(latest_file)
+
+              # Convert to format expected by update_results
+              results = []
+              for game in all_games:
+                  results.append({
+                      'neutral': game[0],
+                      'away_team': game[1],
+                      'away_score': game[2],
+                      'home_team': game[3],
+                      'home_score': game[4],
+                      'date': game[5]
+                  })
+
+              # Update predictions database
+              count = prediction_tracker.update_results(results)
+              print(f'Updated {count} predictions with results')
+          "
+
+      - name: generate performance report
+        run: python generate_performance_report.py
+
+      - name: commit files
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add -A
+          git diff --quiet && git diff --staged --quiet || git commit -m "update performance tracking and metrics"
+
+      - name: push changes
+        uses: ad-m/github-push-action@v0.6.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: main
