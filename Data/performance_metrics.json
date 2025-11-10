@@ -1,13 +1,16 @@
 {
   "overall": {
-    "total_predictions": 108,
-    "total_games_played": 108,
-    "correct_predictions": 90,
-    "accuracy": 0.8333,
-    "brier_score": 0.1204,
-    "log_loss": 0.3806,
-    "mean_spread_error": 32.84,
-    "median_spread_error": 29.85,
+    "total_predictions": 107,
+    "total_games_played": 107,
+    "correct_predictions": 89,
+    "accuracy": 0.8318,
+    "ats_correct": 57,
+    "ats_accuracy": 0.5327,
+    "ats_total": 107,
+    "brier_score": 0.1215,
+    "log_loss": 0.3833,
+    "mean_spread_error": 32.75,
+    "median_spread_error": 29.7,
     "beat_vegas_pct": 0.7234,
     "vegas_comparisons": 94,
     "confidence_stratified": {
@@ -28,25 +31,28 @@
         "accuracy": 0.7895
       },
       "90-100%": {
-        "games": 53,
-        "accuracy": 0.9623
+        "games": 52,
+        "accuracy": 0.9615
       }
     },
     "date_range": {
       "earliest": 20251105,
-      "latest": 20251110
+      "latest": 20251107
     },
-    "last_updated": "2025-11-10 13:58:03"
+    "last_updated": "2025-11-10 15:45:04"
   },
   "last_7_days": {
-    "total_predictions": 108,
-    "total_games_played": 108,
-    "correct_predictions": 90,
-    "accuracy": 0.8333,
-    "brier_score": 0.1204,
-    "log_loss": 0.3806,
-    "mean_spread_error": 32.84,
-    "median_spread_error": 29.85,
+    "total_predictions": 107,
+    "total_games_played": 107,
+    "correct_predictions": 89,
+    "accuracy": 0.8318,
+    "ats_correct": 57,
+    "ats_accuracy": 0.5327,
+    "ats_total": 107,
+    "brier_score": 0.1215,
+    "log_loss": 0.3833,
+    "mean_spread_error": 32.75,
+    "median_spread_error": 29.7,
     "beat_vegas_pct": 0.7234,
     "vegas_comparisons": 94,
     "confidence_stratified": {
@@ -67,25 +73,28 @@
         "accuracy": 0.7895
       },
       "90-100%": {
-        "games": 53,
-        "accuracy": 0.9623
+        "games": 52,
+        "accuracy": 0.9615
       }
     },
     "date_range": {
       "earliest": 20251105,
-      "latest": 20251110
+      "latest": 20251107
     },
-    "last_updated": "2025-11-10 13:58:03"
+    "last_updated": "2025-11-10 15:45:04"
   },
   "last_30_days": {
-    "total_predictions": 108,
-    "total_games_played": 108,
-    "correct_predictions": 90,
-    "accuracy": 0.8333,
-    "brier_score": 0.1204,
-    "log_loss": 0.3806,
-    "mean_spread_error": 32.84,
-    "median_spread_error": 29.85,
+    "total_predictions": 107,
+    "total_games_played": 107,
+    "correct_predictions": 89,
+    "accuracy": 0.8318,
+    "ats_correct": 57,
+    "ats_accuracy": 0.5327,
+    "ats_total": 107,
+    "brier_score": 0.1215,
+    "log_loss": 0.3833,
+    "mean_spread_error": 32.75,
+    "median_spread_error": 29.7,
     "beat_vegas_pct": 0.7234,
     "vegas_comparisons": 94,
     "confidence_stratified": {
@@ -106,14 +115,14 @@
         "accuracy": 0.7895
       },
       "90-100%": {
-        "games": 53,
-        "accuracy": 0.9623
+        "games": 52,
+        "accuracy": 0.9615
       }
     },
     "date_range": {
       "earliest": 20251105,
-      "latest": 20251110
+      "latest": 20251107
     },
-    "last_updated": "2025-11-10 13:58:03"
+    "last_updated": "2025-11-10 15:45:04"
   }
 }

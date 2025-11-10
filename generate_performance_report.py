@@ -51,7 +51,9 @@ def generate_full_report():
     if overall_metrics.get('total_games_played', 0) > 0:
         print(f"\nOverall Performance:")
         print(f"  Total Predictions: {overall_metrics['total_predictions']}")
-        print(f"  Accuracy: {overall_metrics['accuracy']:.2%}")
+        print(f"  Win/Loss Accuracy: {overall_metrics['accuracy']:.2%}")
+        if overall_metrics.get('ats_accuracy') is not None:
+            print(f"  ATS Accuracy (Betting): {overall_metrics['ats_accuracy']:.2%}")
         print(f"  Brier Score: {overall_metrics['brier_score']:.4f}")
         print(f"  Mean Spread Error: {overall_metrics['mean_spread_error']:.2f} points")
 
@@ -88,7 +90,13 @@ def generate_markdown_report(overall, last_7, last_30):
     report += "|--------|-------|\n"
     report += f"| Total Predictions | {overall['total_predictions']} |\n"
     report += f"| Correct Predictions | {overall['correct_predictions']} |\n"
-    report += f"| **Accuracy** | **{overall['accuracy']:.2%}** |\n"
+    report += f"| **Win/Loss Accuracy** | **{overall['accuracy']:.2%}** |\n"
+
+    # Add ATS metrics if available
+    if overall.get('ats_accuracy') is not None:
+        report += f"| **ATS Accuracy (Betting)** | **{overall['ats_accuracy']:.2%}** |\n"
+        report += f"| ATS Correct | {overall['ats_correct']}/{overall['ats_total']} |\n"
+
     report += f"| Brier Score | {overall['brier_score']:.4f} |\n"
     report += f"| Log Loss | {overall['log_loss']:.4f} |\n"
     report += f"| Mean Spread Error | {overall['mean_spread_error']:.2f} pts |\n"
@@ -126,7 +134,10 @@ def generate_markdown_report(overall, last_7, last_30):
 
     # Interpretation Guide
     report += "\n## Understanding the Metrics\n\n"
-    report += "**Accuracy**: Percentage of games where we correctly predicted the winner.\n\n"
+    report += "**Win/Loss Accuracy**: Percentage of games where we correctly predicted the winner.\n\n"
+    report += "**ATS Accuracy (Against the Spread)**: Percentage of games where our spread prediction would have won a bet. "
+    report += "This measures actual betting value. A spread favorite must win by MORE than the spread to 'cover'. "
+    report += "For example, if a team is -9.9, they must win by 10+ points. Professional bettors need ~52.5% ATS accuracy to break even.\n\n"
     report += "**Brier Score**: Measures the accuracy of probabilistic predictions. "
     report += "Lower is better. Perfect predictions = 0.0, random guessing ≈ 0.25.\n\n"
     report += "**Log Loss**: Measures how well our predicted probabilities match actual outcomes. "

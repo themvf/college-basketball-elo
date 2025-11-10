@@ -1,28 +1,30 @@
 # ELO Prediction Performance Report
 
-**Last Updated**: 2025-11-10 13:58:03
+**Last Updated**: 2025-11-10 15:45:04
 
-**Date Range**: 20251105 to 20251110
+**Date Range**: 20251105 to 20251107
 
 ## Overall Performance
 
 | Metric | Value |
 |--------|-------|
-| Total Predictions | 108 |
-| Correct Predictions | 90 |
-| **Accuracy** | **83.33%** |
-| Brier Score | 0.1204 |
-| Log Loss | 0.3806 |
-| Mean Spread Error | 32.84 pts |
-| Median Spread Error | 29.85 pts |
+| Total Predictions | 107 |
+| Correct Predictions | 89 |
+| **Win/Loss Accuracy** | **83.18%** |
+| **ATS Accuracy (Betting)** | **53.27%** |
+| ATS Correct | 57/107 |
+| Brier Score | 0.1215 |
+| Log Loss | 0.3833 |
+| Mean Spread Error | 32.75 pts |
+| Median Spread Error | 29.70 pts |
 
 ## Recent Performance
 
 | Period | Games | Accuracy | Mean Spread Error |
 |--------|-------|----------|-------------------|
-| Last 7 Days | 108 | 83.33% | 32.84 pts |
-| Last 30 Days | 108 | 83.33% | 32.84 pts |
-| All Time | 108 | 83.33% | 32.84 pts |
+| Last 7 Days | 107 | 83.18% | 32.75 pts |
+| Last 30 Days | 107 | 83.18% | 32.75 pts |
+| All Time | 107 | 83.18% | 32.75 pts |
 
 ## Performance vs Vegas Spreads
 
@@ -41,11 +43,13 @@ How accurate are we when we're confident vs uncertain?
 | 60-70% | 11 | 72.73% |
 | 70-80% | 13 | 69.23% |
 | 80-90% | 19 | 78.95% |
-| 90-100% | 53 | 96.23% |
+| 90-100% | 52 | 96.15% |
 
 ## Understanding the Metrics
 
-**Accuracy**: Percentage of games where we correctly predicted the winner.
+**Win/Loss Accuracy**: Percentage of games where we correctly predicted the winner.
+
+**ATS Accuracy (Against the Spread)**: Percentage of games where our spread prediction would have won a bet. This measures actual betting value. A spread favorite must win by MORE than the spread to 'cover'. For example, if a team is -9.9, they must win by 10+ points. Professional bettors need ~52.5% ATS accuracy to break even.
 
 **Brier Score**: Measures the accuracy of probabilistic predictions. Lower is better. Perfect predictions = 0.0, random guessing ≈ 0.25.
 
