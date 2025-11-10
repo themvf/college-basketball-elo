@@ -26,7 +26,17 @@ def scrape_neutral_data():
 	The strategy will be to scrape games/scores from sports-reference as usual, but then check the Neutral flag with this new source
 	'''
 	schedule_url = 'https://www.teamrankings.com/ncb/schedules/season/'
-	data = requests.get(schedule_url).content
+	try:
+		response = requests.get(schedule_url)
+		response.raise_for_status()
+		data = response.content
+	except requests.RequestException as e:
+		print(f'ERROR: Failed to fetch neutral data from teamrankings.com: {e}')
+		global NEUTRAL_MAP, TR_NAMES
+		NEUTRAL_MAP = {}
+		TR_NAMES = set()
+		return
+
 	table_games_data = BeautifulSoup(data,'html.parser').find_all("tr")
 	all_rows = [i.text.split('\n') for i in table_games_data]
 
@@ -51,14 +61,15 @@ def scrape_neutral_data():
 
 def scrape_scores(date_obj):
 	'''
-	scrape and return stats in the form of a list of lists where each sublist is information from a single game played on the specified day 
+	scrape and return stats in the form of a list of lists where each sublist is information from a single game played on the specified day
 	'''
-	day, month, year = str(date_obj.day), str(date_obj.month), str(date_obj.year)
+	day, month, year = str(date_obj.day).zfill(2), str(date_obj.month).zfill(2), str(date_obj.year)
 	day_stats = []
 	url = URLV2.replace("DAY", day).replace("MONTH", month).replace("YEAR", year)
 	response = requests.get(url)
 	if response.status_code != 200:
 		print(f'ERROR: Response Code {response.status_code}')
+		return []
 	data = response.content
 
 	table_divs = BeautifulSoup(data, 'html.parser').find_all('tbody')

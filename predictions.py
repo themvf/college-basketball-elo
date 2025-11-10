@@ -73,15 +73,15 @@ def predict_game(elo_state, home, away, pick_mode = False, neutral = False, verb
 
 	return winner, "{0:.0%}".format(winp_home) if winner == home else "{0:.0%}".format(1 - winp_home), home_spread
 
-def predict_tournament(elo_state, tournamant_teams, pick_mode = 0, verbose = False, rounds = ALL_ROUNDS):
+def predict_tournament(elo_state, tournament_teams, pick_mode = 0, verbose = False, rounds = ALL_ROUNDS):
 	'''
 	uses the specified elo_state to simulate a single tournament for teams in tournament teams
 	pick_mode: 0 -> chooose winners probabilistically, 1 -> always choose the better team, 2 -> choose a random team
 	outputs a Plotly table summarizing predictions and saves a csv
 	'''
-	results = {rounds[0]: tournamant_teams}
+	results = {rounds[0]: tournament_teams}
 
-	remaining = tournamant_teams
+	remaining = tournament_teams
 
 	for r in rounds[1:]:
 		matchups = matchups_from_list(remaining)
@@ -96,14 +96,14 @@ def predict_tournament(elo_state, tournamant_teams, pick_mode = 0, verbose = Fal
 
 	return results
 
-def sim_tournaments(elo_state, tournamant_teams, n, verbose = False, rounds = ALL_ROUNDS):
+def sim_tournaments(elo_state, tournament_teams, n, verbose = False, rounds = ALL_ROUNDS):
 	'''
 	uses the specified elo_state to simulate a tournament (specified by tournament_teams) n times
 	each row in the output specifies the share of simulations in which a team made it to the corresponding round
 	outputs a Plotly table summarizing predictions and saves a csv
 	'''
 	sim_results = {}
-	for team in tournamant_teams:
+	for team in tournament_teams:
 		if '/' in team:
 			team1, team2 = team.split('/')[0], team.split('/')[1]
 			sim_results[team1] = [0 for _ in range(len(rounds) - 1)]
@@ -112,7 +112,7 @@ def sim_tournaments(elo_state, tournamant_teams, n, verbose = False, rounds = AL
 			sim_results[team] = [0 for _ in range(len(rounds) - 1)]
 
 	for _ in range(n):
-		results = predict_tournament(elo_state, tournamant_teams, rounds = rounds)
+		results = predict_tournament(elo_state, tournament_teams, rounds = rounds)
 		for r in range(1, len(rounds)):
 			for team in results[rounds[r]]:
 				sim_results[team[0]][r-1] += 1
@@ -158,19 +158,19 @@ def predict_next_day(elo_state, forecast_date, auto):
 	new_top_50 = pd.DataFrame(elo_state.get_top(50), columns = ['Team', 'Elo Rating', '7 Day Change']) 
 	utils.save_markdown_df(output, new_top_50, forecast_date.strftime('%Y-%m-%d'))
 
-def main(auto = False, forecast_date = False, matchup = False, neutral = False, sim_mode = False, stop_short = '99999999', bracket = False, pick_mode = 0, bracket_round_start = 0):
+def main(auto = False, forecast_date = None, matchup = None, neutral = False, sim_mode = None, stop_short = '99999999', bracket = None, pick_mode = 0, bracket_round_start = 0):
 	'''
 	Retrieves an elo simulation through the specified 'stop_short' date then cascades through options:
-	1. if a 'matchup' of two teams is provided, print out predictions for that matchup - factoring in 
+	1. if a 'matchup' of two teams is provided, print out predictions for that matchup - factoring in
 	whether the matchup is at a 'neutral' site or not
-	2. if 'sim_mode' is specified [a filepath to a bracket, a number of simulations], then run the specified 
+	2. if 'sim_mode' is specified [a filepath to a bracket, a number of simulations], then run the specified
 	number of bracket simulations on the specified bracket
-	3. if just 'bracket', which is a filepath to a bracket, is specified, deliver a one-time prediction for that 
+	3. if just 'bracket', which is a filepath to a bracket, is specified, deliver a one-time prediction for that
 	bracket based on the starting teams. 'pick_mode' chooses probabilistically (0), the better team (1), or randomly (2)
 	4. if nothing is specified, make predictions for today's games
 	'''
 	elo_state = elo.main(stop_short = stop_short)
-	if matchup != False:
+	if matchup:
 		home, away = matchup
 		print('Ratings through ' + elo_state.date)
 		if neutral:
@@ -178,17 +178,17 @@ def main(auto = False, forecast_date = False, matchup = False, neutral = False, 
 		else:
 			print(away, "@", home)
 		predict_game(elo_state, home, away, neutral = neutral, verbose = True)
-	elif sim_mode != False:
+	elif sim_mode:
 		file, simulations = sim_mode
-		tournamant_teams = list(pd.read_csv(file).iloc[:,bracket_round_start].dropna())
+		tournament_teams = list(pd.read_csv(file).iloc[:,bracket_round_start].dropna())
 		rounds = list(pd.read_csv(file).columns)
-		sim_tournaments(elo_state, tournamant_teams, n = int(simulations), verbose = True, rounds = rounds[bracket_round_start:])
-	elif bracket != False:
-		tournamant_teams = list(pd.read_csv(bracket).iloc[:,bracket_round_start].dropna())
+		sim_tournaments(elo_state, tournament_teams, n = int(simulations), verbose = True, rounds = rounds[bracket_round_start:])
+	elif bracket:
+		tournament_teams = list(pd.read_csv(bracket).iloc[:,bracket_round_start].dropna())
 		rounds = list(pd.read_csv(bracket).columns)
-		predict_tournament(elo_state, tournamant_teams, pick_mode = pick_mode, verbose = True, rounds = rounds[bracket_round_start:])
+		predict_tournament(elo_state, tournament_teams, pick_mode = pick_mode, verbose = True, rounds = rounds[bracket_round_start:])
 	else:
-		forecast_date = datetime.date.today() if forecast_date == False else datetime.datetime.strptime(forecast_date, "%Y%m%d")
+		forecast_date = datetime.date.today() if not forecast_date else datetime.datetime.strptime(forecast_date, "%Y%m%d")
 		forecast_date = forecast_date - datetime.timedelta(hours = 5) if auto else forecast_date
 		predict_next_day(elo_state, forecast_date, auto)
 	utils.clean_up_old_outputs_and_data()

@@ -439,17 +439,17 @@ def historical_brackets(explore):
 	for stop_date, tourney_filepath in [('20230321', 'tournament_results_2024.csv'),
 										('20230315', 'tournament_results_2023.csv'),
 										('20220316', 'tournament_results_2022.csv'),
-										('20210317', 'tournament_results_2021.csv'), 
-										('20190320', 'tournament_results_2019.csv'), 
-										('20180314', 'tournament_results_2018.csv'), 
+										('20210317', 'tournament_results_2021.csv'),
+										('20190320', 'tournament_results_2019.csv'),
+										('20180314', 'tournament_results_2018.csv'),
 										('20170315', 'tournament_results_2017.csv')]:
 		elo_state = elo.main(stop_short = stop_date)
 		df = pd.read_csv(utils.DATA_FOLDER + tourney_filepath)
-		tournamant_teams = list(df['first'].dropna())
-		results = {'first': tournamant_teams}
+		tournament_teams = list(df['first'].dropna())
+		results = {'first': tournament_teams}
 		for r in ALL_ROUNDS:
 			results[r] = df[r].dropna().values
-		best_bracket = predict_tournament(elo_state, tournamant_teams, pick_mode = 1)
+		best_bracket = predict_tournament(elo_state, tournament_teams, pick_mode = 1)
 		print(evaluate_brackets(best_bracket, results))
 
 	remaining = [32, 16, 8, 4, 2, 1]
