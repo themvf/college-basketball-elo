@@ -123,6 +123,7 @@ report_text = prediction_tracker.generate_report(output_file='report.md')
 
 ## Viewing Results
 
+### GitHub Pages (Static Reports)
 Performance reports are automatically published to GitHub Pages:
 - **Predictions**: `https://your-username.github.io/college-basketball-elo/`
 - **Performance**: `https://your-username.github.io/college-basketball-elo/performance.html`
@@ -133,6 +134,25 @@ The performance page shows:
 - Confidence-stratified accuracy
 - Comparison with Vegas spreads
 - Historical metrics
+
+### Streamlit Dashboard (Interactive)
+For real-time interactive analysis, use the Streamlit dashboard:
+
+```bash
+pip install -r requirements-streamlit.txt
+streamlit run streamlit_dashboard.py
+```
+
+The dashboard provides:
+- **Interactive Charts**: Zoom, pan, and explore data
+- **Date Filters**: Focus on specific time periods
+- **Rolling Windows**: Adjustable trend analysis
+- **Live Updates**: Real-time metrics as data arrives
+- **Data Export**: Download filtered data and metrics
+- **Calibration Analysis**: Visual probability calibration
+- **Vegas Comparison**: Side-by-side performance analysis
+
+See [STREAMLIT_DASHBOARD.md](STREAMLIT_DASHBOARD.md) for full documentation.
 
 ## Data Persistence
 
