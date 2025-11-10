@@ -38,8 +38,13 @@ else:
 # Load ELO data
 with st.spinner("Loading ELO ratings..."):
     try:
+        # Force refresh if using latest data
         elo_state = elo.main(stop_short=stop_date)
         top_teams = elo_state.get_top(num_teams)
+
+        if not top_teams or len(top_teams) == 0:
+            st.error("No teams found. Please check that game data is available.")
+            st.stop()
 
         # Display date
         st.info(f"📅 Rankings as of: **{elo_state.date}**")
@@ -61,7 +66,16 @@ with st.spinner("Loading ELO ratings..."):
 
         # Format columns
         df['ELO Rating'] = df['ELO Rating'].round(0).astype(int)
-        df[f'{period_days}-Day Change'] = df[f'{period_days}-Day Change'].round(0).astype(int)
+
+        # Convert day change from string ('+3') to int
+        try:
+            df[f'{period_days}-Day Change'] = pd.to_numeric(
+                df[f'{period_days}-Day Change'].astype(str).str.replace('+', ''),
+                errors='coerce'
+            ).fillna(0).astype(int)
+        except Exception as e:
+            st.warning(f"Could not format day change column: {e}")
+            # Keep as is if conversion fails
 
         # Display table
         st.subheader(f"Top {num_teams} Teams")
