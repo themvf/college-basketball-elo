@@ -273,11 +273,12 @@ def calculate_metrics(days_back=None, min_date=None):
 
     # Apply date filters
     if days_back:
-        cutoff_date = (datetime.now() - timedelta(days=days_back)).strftime('%Y%m%d')
+        cutoff_date = int((datetime.now() - timedelta(days=days_back)).strftime('%Y%m%d'))
         played = played[played['game_date'] >= cutoff_date]
 
     if min_date:
-        played = played[played['game_date'] >= min_date]
+        min_date_int = int(min_date) if isinstance(min_date, str) else min_date
+        played = played[played['game_date'] >= min_date_int]
 
     if len(played) == 0:
         return {

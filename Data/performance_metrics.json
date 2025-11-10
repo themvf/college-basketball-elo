@@ -1,17 +1,119 @@
 {
   "overall": {
-    "total_predictions": 0,
-    "total_games_played": 0,
-    "message": "No completed games with predictions yet"
+    "total_predictions": 108,
+    "total_games_played": 108,
+    "correct_predictions": 90,
+    "accuracy": 0.8333,
+    "brier_score": 0.1204,
+    "log_loss": 0.3806,
+    "mean_spread_error": 32.84,
+    "median_spread_error": 29.85,
+    "beat_vegas_pct": 0.7234,
+    "vegas_comparisons": 94,
+    "confidence_stratified": {
+      "50-60%": {
+        "games": 12,
+        "accuracy": 0.5833
+      },
+      "60-70%": {
+        "games": 11,
+        "accuracy": 0.7273
+      },
+      "70-80%": {
+        "games": 13,
+        "accuracy": 0.6923
+      },
+      "80-90%": {
+        "games": 19,
+        "accuracy": 0.7895
+      },
+      "90-100%": {
+        "games": 53,
+        "accuracy": 0.9623
+      }
+    },
+    "date_range": {
+      "earliest": 20251105,
+      "latest": 20251110
+    },
+    "last_updated": "2025-11-10 13:58:03"
   },
   "last_7_days": {
-    "total_predictions": 0,
-    "total_games_played": 0,
-    "message": "No completed games with predictions yet"
+    "total_predictions": 108,
+    "total_games_played": 108,
+    "correct_predictions": 90,
+    "accuracy": 0.8333,
+    "brier_score": 0.1204,
+    "log_loss": 0.3806,
+    "mean_spread_error": 32.84,
+    "median_spread_error": 29.85,
+    "beat_vegas_pct": 0.7234,
+    "vegas_comparisons": 94,
+    "confidence_stratified": {
+      "50-60%": {
+        "games": 12,
+        "accuracy": 0.5833
+      },
+      "60-70%": {
+        "games": 11,
+        "accuracy": 0.7273
+      },
+      "70-80%": {
+        "games": 13,
+        "accuracy": 0.6923
+      },
+      "80-90%": {
+        "games": 19,
+        "accuracy": 0.7895
+      },
+      "90-100%": {
+        "games": 53,
+        "accuracy": 0.9623
+      }
+    },
+    "date_range": {
+      "earliest": 20251105,
+      "latest": 20251110
+    },
+    "last_updated": "2025-11-10 13:58:03"
   },
   "last_30_days": {
-    "total_predictions": 0,
-    "total_games_played": 0,
-    "message": "No completed games with predictions yet"
+    "total_predictions": 108,
+    "total_games_played": 108,
+    "correct_predictions": 90,
+    "accuracy": 0.8333,
+    "brier_score": 0.1204,
+    "log_loss": 0.3806,
+    "mean_spread_error": 32.84,
+    "median_spread_error": 29.85,
+    "beat_vegas_pct": 0.7234,
+    "vegas_comparisons": 94,
+    "confidence_stratified": {
+      "50-60%": {
+        "games": 12,
+        "accuracy": 0.5833
+      },
+      "60-70%": {
+        "games": 11,
+        "accuracy": 0.7273
+      },
+      "70-80%": {
+        "games": 13,
+        "accuracy": 0.6923
+      },
+      "80-90%": {
+        "games": 19,
+        "accuracy": 0.7895
+      },
+      "90-100%": {
+        "games": 53,
+        "accuracy": 0.9623
+      }
+    },
+    "date_range": {
+      "earliest": 20251105,
+      "latest": 20251110
+    },
+    "last_updated": "2025-11-10 13:58:03"
   }
 }

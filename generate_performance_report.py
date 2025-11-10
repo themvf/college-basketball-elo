@@ -27,7 +27,7 @@ def generate_full_report():
             'overall': overall_metrics,
             'last_7_days': last_7_days,
             'last_30_days': last_30_days
-        }, f, indent=2)
+        }, f, indent=2, default=int)
 
     print(f"Saved metrics to {metrics_file}")
 
