@@ -1,0 +1,17 @@
+{
+  "overall": {
+    "total_predictions": 0,
+    "total_games_played": 0,
+    "message": "No completed games with predictions yet"
+  },
+  "last_7_days": {
+    "total_predictions": 0,
+    "total_games_played": 0,
+    "message": "No completed games with predictions yet"
+  },
+  "last_30_days": {
+    "total_predictions": 0,
+    "total_games_played": 0,
+    "message": "No completed games with predictions yet"
+  }
+}

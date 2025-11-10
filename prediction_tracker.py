@@ -201,8 +201,14 @@ def update_results(results_df, update_date=None):
 
         # Find matching prediction(s) in database
         # Match on game_date, home_team, away_team
+        # Convert game_date to int for comparison
+        try:
+            game_date_int = int(game_date)
+        except:
+            game_date_int = game_date
+
         mask = (
-            (db['game_date'] == game_date) &
+            (db['game_date'] == game_date_int) &
             (db['home_team'].apply(normalize_team_name) == home_team) &
             (db['away_team'].apply(normalize_team_name) == away_team) &
             (db['game_played'] == 0)  # Only update games not yet marked as played
